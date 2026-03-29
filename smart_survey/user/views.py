@@ -4,7 +4,7 @@ from .forms import UserRegisterForm
 from surveys.views import home
 from django_ratelimit.decorators import ratelimit
 from .utils.ratelimit import user_or_ip
-@ratelimit(key=user_or_ip, rate="10/m", block=True)
+@ratelimit(key=user_or_ip, rate="50/m", block=True)
 def registration(request):
     if request.method == 'POST':
         form = UserRegisterForm(request.POST)

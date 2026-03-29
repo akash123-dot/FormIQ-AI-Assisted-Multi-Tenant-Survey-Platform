@@ -11,7 +11,7 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 """
 import os
 from dotenv import load_dotenv
-
+from django.contrib.messages import constants as messages
 load_dotenv()
 
 from pathlib import Path
@@ -28,7 +28,8 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = os.getenv('SECRET_KEY', 'fallback-key-for-local-dev-only')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = False
+# DEBUG = False
+DEBUG = True
 
 ALLOWED_HOSTS = ['smart-survey-6raf.onrender.com', 'localhost', '127.0.0.1', 'web-production-c59ae.up.railway.app']
 
@@ -81,28 +82,28 @@ WSGI_APPLICATION = 'smart_survey.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 
-# DATABASES = {
-#     'default': {
-#         'ENGINE': 'django.db.backends.sqlite3',
-#         'NAME': BASE_DIR / 'db.sqlite3',
-#     }
-# }
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': BASE_DIR / 'db.sqlite3',
+    }
+}
 
 load_dotenv(BASE_DIR / ".env")
 
-DATABASES = {
-    "default": {
-        "ENGINE": "django.db.backends.postgresql",
-        "NAME": os.getenv("DB_NAME"),
-        "USER": os.getenv("DB_USER"),
-        "PASSWORD": os.getenv("DB_PASSWORD"),
-        "HOST": os.getenv("DB_HOST"),
-        "PORT": os.getenv("DB_PORT"),
-        "OPTIONS": {
-            "sslmode": os.getenv("DB_SSLMODE", "require"),
-        },
-    }
-}
+# DATABASES = {
+#     "default": {
+#         "ENGINE": "django.db.backends.postgresql",
+#         "NAME": os.getenv("DB_NAME"),
+#         "USER": os.getenv("DB_USER"),
+#         "PASSWORD": os.getenv("DB_PASSWORD"),
+#         "HOST": os.getenv("DB_HOST"),
+#         "PORT": os.getenv("DB_PORT"),
+#         "OPTIONS": {
+#             "sslmode": os.getenv("DB_SSLMODE", "require"),
+#         },
+#     }
+# }
 
 
 
@@ -155,18 +156,18 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 from mongoengine import connect
 
-MONGODB_URI = os.getenv("MONGODB_URI")
+# MONGODB_URI = os.getenv("MONGODB_URI")
 
-if MONGODB_URI:
-    connect(host=MONGODB_URI)
-else:
-    raise Exception("MONGODB_URI is not set")
+# if MONGODB_URI:
+#     connect(host=MONGODB_URI)
+# else:
+#     raise Exception("MONGODB_URI is not set")
 
 
-# connect(
-#     db="survey_app",
-#     host="mongodb://localhost:27017/survey_app",  
-# )
+connect(
+    db="survey_app",
+    host="mongodb://localhost:27017/survey_app",  
+)
 
 
 
@@ -184,35 +185,35 @@ HANDLER404 = 'surveys.views.custom_404'
 
 
 
-# REDIS_URL = os.getenv(
-#     "REDIS_URL",
-#     "redis://my-local-redis:6379/0"  
-# )
-
-# CACHES = {
-#     "default": {
-#         "BACKEND": "django_redis.cache.RedisCache",
-#         "LOCATION": "redis://127.0.0.1:6379/0",
-#     }
-# }
-
-
-REDIS_URL = os.getenv("REDIS_URL")
-
+REDIS_URL = os.getenv(
+    "REDIS_URL",
+    "redis://my-local-redis:6379/0"  
+)
 
 CACHES = {
     "default": {
         "BACKEND": "django_redis.cache.RedisCache",
-        "LOCATION": REDIS_URL,
-        "OPTIONS": {
-            "CLIENT_CLASS": "django_redis.client.DefaultClient",
-           
-            "CONNECTION_POOL_KWARGS": {
-                "ssl_cert_reqs": None
-            }
-        }
+        "LOCATION": "redis://127.0.0.1:6379/0",
     }
 }
+
+
+# REDIS_URL = os.getenv("REDIS_URL")
+
+
+# CACHES = {
+#     "default": {
+#         "BACKEND": "django_redis.cache.RedisCache",
+#         "LOCATION": REDIS_URL,
+#         "OPTIONS": {
+#             "CLIENT_CLASS": "django_redis.client.DefaultClient",
+           
+#             "CONNECTION_POOL_KWARGS": {
+#                 "ssl_cert_reqs": None
+#             }
+#         }
+#     }
+# }
 
 
 RATELIMIT_USE_CACHE = "default"
@@ -225,12 +226,20 @@ GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")
 
 
 
+MESSAGE_TAGS = {
+    messages.ERROR: 'danger',
+    messages.WARNING: 'warning',
+    messages.SUCCESS: 'success',
+    messages.INFO: 'info',
+}
 
-SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 
 
-SECURE_SSL_REDIRECT = True
+# SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 
 
-SESSION_COOKIE_SECURE = True
-CSRF_COOKIE_SECURE = True
+# SECURE_SSL_REDIRECT = True
+
+
+# SESSION_COOKIE_SECURE = True
+# CSRF_COOKIE_SECURE = True

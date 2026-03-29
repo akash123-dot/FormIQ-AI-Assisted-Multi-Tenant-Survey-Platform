@@ -28,25 +28,30 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path("", views.home, name='home'),
     path("survey/", views.SurveyView, name='create-survey'),
-    path("question/<survey_id>", views.Question_View, name='question'),
+    path("question/<str:survey_id>", views.Question_View, name='question'),
     # path("save-survey-link/<survey_id>", views.SaveSurveyLink, name='save-survey-link'),
-    path("show-survey/<survey_id>", views.ShowSurveyView, name='show-survey'),
+    path("show-survey/<str:survey_id>", views.ShowSurveyView, name='show-survey'),
     path("show-all-surveys", views.ShowAllSurveys, name='show-all-surveys'),
-    path("AI-survey/<survey_id>", ResultAIView, name='AI-survey'),
-    path("SaveAllAiQuestions/<survey_id>", SaveAllAiQuestions, name='SaveAllAiQuestions'),
+    path("AI-survey/<str:survey_id>", ResultAIView, name='AI-survey'),
+    path("SaveAllAiQuestions/<str:survey_id>", SaveAllAiQuestions, name='SaveAllAiQuestions'),
 
     # for user who click on the survey link
     path("start-survey/<unique_id>", response_views.TakeResponse, name='TakeResponse'),
     path('submit-survey/<str:survey_id>/<str:response_id>/', response_views.SubmitSurvey, name='SubmitSurvey'),
 
     # delete my survey
-    path("delete-survey/<survey_id>", views.DeleteSurvey, name='delete-survey'),
+    path("delete-survey/<str:survey_id>", views.DeleteSurvey, name='delete-survey'),
+    
 
     # Build charts
-    path("show-chart/<survey_id>", views.BuildDiagram, name='show-chart'),
+    # path("show-chart/<str:survey_id>", views.BuildDiagram, name='show-chart'),
+    path("surveys/<str:survey_id>/analytics/", views.BuildDiagram, name="build_diagram"),
+
+    #download survey
+    path("surveys/<str:survey_id>/download/", views.DownloadSurvey, name="download-survey"),
 
     #save single question
-    path("save-question/<survey_id>", SaveAIQuestions, name='save-question'),
+    path("save-question/<str:survey_id>", SaveAIQuestions, name='save-question'),
 
     #login and register
     path('register/', account_views.registration, name='registration'),

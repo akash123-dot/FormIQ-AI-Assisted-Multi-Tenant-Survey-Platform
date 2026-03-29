@@ -10,9 +10,9 @@ class QuestionForm(forms.Form):
     text = forms.CharField(max_length=200)
     question_type = forms.ChoiceField(choices=[
         ('text', 'Text'),
-        ('int', 'Integer'),
-        ('bool', 'Boolean'),
-        ('float', 'Float'),
+        # ('int', 'Integer'),
+        # ('bool', 'Boolean'),
+        # ('float', 'Float'),
         ('single_choice', 'Single Choice'),
         ('multiple_choice', 'Multiple Choice'),
     ])

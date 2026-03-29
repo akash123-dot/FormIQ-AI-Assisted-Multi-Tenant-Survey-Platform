@@ -17,7 +17,7 @@ class Question(Document):
     question_type = StringField(required=True, choices=[
         'text', 'int', 'float', 'bool', 'single_choice', 'multiple_choice'
     ])
-    options = ListField(StringField())  # For choice-type questions
+    options = ListField(StringField())  
     is_ai_generated = BooleanField(default=False)
     created_at = DateTimeField(default=datetime.utcnow)
 

@@ -80,7 +80,7 @@
         padding-top: 15px;
         border-top: 1px solid #edf2f7;
         display: grid;
-        grid-template-columns: 1fr 1fr;
+        grid-template-columns:  was 1fr 1fr ;
         gap: 10px;
     }
 
@@ -151,9 +151,13 @@
                             <a href="{% url 'show-survey' survey_id=survey.survey_id %}" class="btn btn-outline-primary btn-sm">
                                 View
                             </a>
-                            <a href="{% url 'show-chart' survey_id=survey.survey_id %}" class="btn btn-outline-success btn-sm">
+                            <a href="{% url 'build_diagram' survey_id=survey.survey_id %}" class="btn btn-outline-success btn-sm">
                                 Results
                             </a>
+                            <a href="{% url 'download-survey' survey_id=survey.survey_id %}" class="btn btn-outline-secondary btn-sm" title="Download all responses as JSON">
+                                ⬇ Download
+                            </a>
+
                             <div class="btn-full-width mt-2">
                                 <a href="{% url 'delete-survey' survey_id=survey.survey_id %}" class="btn btn-light text-danger btn-sm w-100" onclick="return confirm('Delete this survey?');">
                                     Delete Survey

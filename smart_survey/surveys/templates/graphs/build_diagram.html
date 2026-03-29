@@ -3,15 +3,13 @@
 {% block content %}
 
 <style>
-    /* --- Analytics Dashboard Styles --- */
-
     .analytics-container {
         max-width: 1000px;
         margin: 0 auto;
         padding-bottom: 60px;
     }
 
-    /* 1. Hero Analytics Header */
+    /* ── Header ── */
     .analytics-header {
         background: #ffffff;
         border-radius: 16px;
@@ -26,155 +24,298 @@
         gap: 20px;
     }
 
-    .header-text h1 {
-        font-size: 2rem;
-        font-weight: 800;
-        color: #2d3748;
-        margin-bottom: 5px;
-    }
+    .header-text h1 { font-size: 2rem; font-weight: 800; color: #2d3748; margin-bottom: 5px; }
+    .header-text p  { font-size: 1rem; color: #718096; margin: 0; }
 
-    .header-text p {
-        font-size: 1rem;
-        color: #718096;
-        margin: 0;
-    }
-
-    /* 2. Metric Card (Total Responses) */
     .metric-card {
         background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
         color: white;
         padding: 15px 30px;
         border-radius: 12px;
         text-align: center;
-        box-shadow: 0 10px 20px rgba(118, 75, 162, 0.25);
+        box-shadow: 0 10px 20px rgba(118,75,162,0.25);
         min-width: 180px;
     }
+    .metric-value { font-size: 2rem; font-weight: 700; line-height: 1; display: block; }
+    .metric-label  { font-size: 0.85rem; text-transform: uppercase; letter-spacing: 1px; opacity: 0.9; margin-top: 5px; display: block; }
 
-    .metric-value {
-        font-size: 2rem;
-        font-weight: 700;
-        line-height: 1;
-        display: block;
-    }
-
-    .metric-label {
-        font-size: 0.85rem;
-        text-transform: uppercase;
-        letter-spacing: 1px;
-        opacity: 0.9;
-        margin-top: 5px;
-        display: block;
-    }
-
-    /* 3. Chart Cards */
+    /* ── Chart Cards ── */
     .chart-card {
         background: #ffffff;
         border-radius: 16px;
         box-shadow: 0 4px 6px rgba(0,0,0,0.02);
-        margin-bottom: 40px; /* Spacing between charts */
+        margin-bottom: 40px;
         border: 1px solid #e2e8f0;
-        overflow: hidden; /* Ensures content stays inside rounded corners */
+        overflow: hidden;
         transition: transform 0.3s ease, box-shadow 0.3s ease;
     }
+    .chart-card:hover { box-shadow: 0 15px 30px rgba(0,0,0,0.06); border-color: #cbd5e0; }
 
-    .chart-card:hover {
-        box-shadow: 0 15px 30px rgba(0,0,0,0.06);
-        border-color: #cbd5e0;
-    }
-
-    /* Header area for the Question Title */
     .chart-header {
-        padding: 25px 30px;
+        padding: 20px 30px;
         border-bottom: 1px solid #edf2f7;
         background-color: #fcfcfc;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 10px;
     }
 
-    .chart-title {
-        font-size: 1.15rem;
-        font-weight: 700;
-        color: #2d3748;
-        margin: 0;
-        line-height: 1.5;
+    .chart-title    { font-size: 1.1rem; font-weight: 700; color: #2d3748; margin: 0; line-height: 1.5; }
+    .chart-subtitle { font-size: 0.85rem; color: #a0aec0; margin-top: 4px; }
+
+    /* Chart type toggle */
+    .chart-toggle { display: flex; gap: 6px; }
+    .toggle-btn {
+        padding: 5px 14px;
+        border-radius: 20px;
+        border: 1px solid #e2e8f0;
+        font-size: 0.8rem;
+        cursor: pointer;
+        background: white;
+        color: #718096;
+        transition: all 0.2s;
+    }
+    .toggle-btn.active {
+        background: #667eea;
+        color: white;
+        border-color: #667eea;
     }
 
-    .chart-subtitle {
-        font-size: 0.9rem;
-        color: #a0aec0;
-        margin-top: 5px;
-    }
-
-    /* 4. Responsive Graph Container */
     .chart-body {
-        padding: 20px;
-        background-color: #fff;
-        width: 100%;
-        /* Critical for responsiveness: */
-        overflow-x: auto; 
-        -webkit-overflow-scrolling: touch;
+        padding: 25px;
+        position: relative;
+        /* Fixed height so Chart.js knows how tall to render */
+        height: 380px;
     }
 
-    /* Ensure the injected graph SVG/Canvas scales */
-    .chart-body > div {
-        max-width: 100%;
-        margin: 0 auto;
+    /* ── Loader ── */
+    #charts-loader {
+        text-align: center;
+        padding: 60px 20px;
+        color: #718096;
     }
+    .spinner {
+        width: 40px; height: 40px;
+        border: 4px solid #e2e8f0;
+        border-top-color: #667eea;
+        border-radius: 50%;
+        animation: spin 0.8s linear infinite;
+        margin: 0 auto 15px;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
 
-    /* 5. Empty State */
+    /* ── Empty State ── */
     .empty-state {
         text-align: center;
         padding: 80px 20px;
         background: #f8fafc;
         border-radius: 16px;
         border: 2px dashed #e2e8f0;
+        color: #a0aec0;
     }
-    
-    .empty-icon {
-        color: #cbd5e0;
-        font-size: 3rem;
-        margin-bottom: 20px;
-    }
-
+    .empty-icon { font-size: 3rem; margin-bottom: 20px; }
 </style>
+
+<!-- Chart.js from CDN — no build step needed -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 
 <div class="analytics-container">
 
+    <!-- Header -->
     <div class="analytics-header">
         <div class="header-text">
             <h1>Survey Results</h1>
             <p>Visual breakdown of responses and data analysis.</p>
         </div>
-        
         <div class="metric-card">
-            <span class="metric-value">{{ total_surveys }}</span>
+            <span class="metric-value" id="total-responses">{{ total_surveys }}</span>
             <span class="metric-label">Total Responses</span>
         </div>
     </div>
 
-    {% if graphs %}
-        {% for graph in graphs %}
-            <div class="chart-card">
-                <div class="chart-header">
-                    <h3 class="chart-title">Response Distribution</h3>
-                    <div class="chart-subtitle">Visualization of answer frequency</div>
-                </div>
+    <!-- Charts will be injected here -->
+    <div id="charts-loader">
+        <div class="spinner"></div>
+        <p>Loading charts…</p>
+    </div>
 
-                <div class="chart-body">
-                    {{ graph|safe }}
-                </div>
-            </div>
-        {% endfor %}
-    {% else %}
-        <div class="empty-state">
-            <div class="empty-icon">
-                <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" fill="currentColor" viewBox="0 0 16 16">
-                    <path d="M11 2a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v12h.5a.5.5 0 0 1 0 1H.5a.5.5 0 0 1 0-1H1v-3a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v3h3V9a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v5h1V2z"/>
-                </svg>
-            </div>
-            <h3>No Data Available</h3>
-            <p class="text-muted">We haven't collected enough responses to generate graphs yet.</p>
-        </div>
-    {% endif %}
+    <div id="charts-container"></div>
 
 </div>
+
+<script>
+(function () {
+    // ── Palette used for pie slices / bar colours ──────────────────────────
+    const PALETTE = [
+        '#667eea','#764ba2','#f093fb','#43e97b','#fa709a',
+        '#fee140','#30cfd0','#a18cd1','#fda085','#84fab0',
+    ];
+
+    // ── Fetch data from our JSON endpoint ─────────────────────────────────
+    const SURVEY_ID = "{{ survey_id }}";
+
+    fetch(`/surveys/${SURVEY_ID}/analytics/`, {   // ← same URL, AJAX flag
+        headers: { "X-Requested-With": "XMLHttpRequest" }
+    })
+    .then(res => {
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        return res.json();
+    })
+    .then(data => {
+        document.getElementById("charts-loader").style.display = "none";
+
+        if (!data.charts || data.charts.length === 0) {
+            showEmpty();
+            return;
+        }
+
+        // Update total in header in case it was 0 server-side
+        document.getElementById("total-responses").textContent = data.total_surveys;
+
+        data.charts.forEach(q => renderCard(q));
+    })
+    .catch(err => {
+        document.getElementById("charts-loader").innerHTML =
+            `<p style="color:#e53e3e;">Failed to load charts. Please refresh.</p>`;
+        console.error(err);
+    });
+
+
+    // ── Build one card per question ────────────────────────────────────────
+    function renderCard(q) {
+        const container = document.getElementById("charts-container");
+
+        // Decide default chart type
+        // Pie if ≤5 unique options, bar otherwise
+        const defaultType = q.labels.length <= 5 ? "pie" : "bar";
+
+        const card = document.createElement("div");
+        card.className = "chart-card";
+        card.innerHTML = `
+            <div class="chart-header">
+                <div>
+                    <div class="chart-title">${escHtml(q.question_text)}</div>
+                    <div class="chart-subtitle">Visualization of answer frequency</div>
+                </div>
+                <div class="chart-toggle">
+                    <button class="toggle-btn ${defaultType === 'bar' ? 'active' : ''}"
+                            data-type="bar" onclick="switchChart(this)">Bar</button>
+                    <button class="toggle-btn ${defaultType === 'pie' ? 'active' : ''}"
+                            data-type="pie" onclick="switchChart(this)">Pie</button>
+                </div>
+            </div>
+            <div class="chart-body">
+                <canvas id="canvas-${q.question_id}"></canvas>
+            </div>
+        `;
+        container.appendChild(card);
+
+        buildChart(q.question_id, q.labels, q.values, defaultType);
+    }
+
+
+    // ── Create / recreate Chart.js instance ───────────────────────────────
+    const chartInstances = {};   // question_id → Chart instance
+
+    function buildChart(id, labels, values, type) {
+        const canvas = document.getElementById(`canvas-${id}`);
+        if (!canvas) return;
+
+        // Destroy previous instance if toggling
+        if (chartInstances[id]) {
+            chartInstances[id].destroy();
+        }
+
+        const isBar = type === "bar";
+
+        chartInstances[id] = new Chart(canvas, {
+            type: type,
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: "Responses",
+                    data: values,
+                    backgroundColor: isBar
+                        ? "rgba(102, 126, 234, 0.75)"          // single colour for bar
+                        : PALETTE.slice(0, labels.length),      // multi-colour for pie
+                    borderColor: isBar ? "#5a67d8" : "#fff",
+                    borderWidth: isBar ? 1.5 : 2,
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: !isBar,          // legend only for pie
+                        position: "bottom",
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: (ctx) => {
+                                const total = ctx.dataset.data.reduce((a, b) => a + b, 0);
+                                const pct   = total ? ((ctx.parsed / total) * 100).toFixed(1) : 0;
+                                return isBar
+                                    ? ` ${ctx.parsed.y} responses`
+                                    : ` ${ctx.label}: ${ctx.parsed} (${pct}%)`;
+                            }
+                        }
+                    },
+                    // Show value labels above bars
+                    datalabels: undefined,
+                },
+                ...(isBar ? {
+                    scales: {
+                        x: { grid: { display: false } },
+                        y: {
+                            beginAtZero: true,
+                            ticks: { precision: 0 },
+                            grid: { color: "#f0f0f0" }
+                        }
+                    }
+                } : {})
+            }
+        });
+
+        // Store labels/values on the card so toggle can re-use them
+        canvas.dataset.labels = JSON.stringify(labels);
+        canvas.dataset.values = JSON.stringify(values);
+    }
+
+
+    // ── Toggle bar ↔ pie ──────────────────────────────────────────────────
+    window.switchChart = function(btn) {
+        const toggleGroup = btn.closest(".chart-toggle");
+        toggleGroup.querySelectorAll(".toggle-btn").forEach(b => b.classList.remove("active"));
+        btn.classList.add("active");
+
+        const card     = btn.closest(".chart-card");
+        const canvas   = card.querySelector("canvas");
+        const id       = canvas.id.replace("canvas-", "");
+        const labels   = JSON.parse(canvas.dataset.labels);
+        const values   = JSON.parse(canvas.dataset.values);
+        const newType  = btn.dataset.type;
+
+        buildChart(id, labels, values, newType);
+    };
+
+
+    // ── Empty state ───────────────────────────────────────────────────────
+    function showEmpty() {
+        document.getElementById("charts-container").innerHTML = `
+            <div class="empty-state">
+                <div class="empty-icon">📊</div>
+                <h3>No Data Available</h3>
+                <p>We haven't collected enough responses to generate charts yet.</p>
+            </div>`;
+    }
+
+    function escHtml(str) {
+        return str.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+    }
+})();
+</script>
 
 {% endblock %}

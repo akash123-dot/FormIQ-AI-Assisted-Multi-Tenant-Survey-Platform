@@ -3,6 +3,7 @@ from surveys.models_mongo import Response, Survey, Question, Answer
 from surveys.models import SurveyLink
 from .forms import ResponseForm
 from django.http import HttpResponseNotFound, HttpResponse
+from bson.objectid import ObjectId
 
 
 def TakeResponse(request, unique_id):
@@ -33,7 +34,9 @@ def TakeResponse(request, unique_id):
 def SubmitSurvey(request, survey_id, response_id):
     if request.method == 'POST':
         response = Response.objects.get(id = response_id)
-        questions = Question.objects.filter(survey=survey_id)
+        if not response:
+            return HttpResponseNotFound("Response not found")
+        questions = Question.objects.filter(survey=ObjectId(survey_id))
         for question in questions:
             field_name = f"answer_{question.id}"
             answer_value = request.POST.getlist(field_name)

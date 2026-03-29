@@ -4,15 +4,17 @@ from .models_mongo import Survey, Question, Response, Answer
 from .models import SurveyLink
 from bson.objectid import ObjectId
 from django.contrib import messages
-import plotly.express as px
-import pandas as pd
+# import plotly.express as px
+# import pandas as pd
 from django.contrib.auth.models import User
 from django.contrib.auth.decorators import login_required
-from django.http import HttpResponseNotFound, Http404
+from django.http import HttpResponseNotFound, Http404, HttpResponse
 from django.shortcuts import get_object_or_404
 from django_ratelimit.decorators import ratelimit
+from django.http import JsonResponse
+import json 
 
-@ratelimit(key="user_or_ip", rate="10/m", block=True)
+@ratelimit(key="user_or_ip", rate="60/m", block=True)
 def home(request):
     return render(request, 'home.html')
 
@@ -21,7 +23,7 @@ def custom_404(request, exception):
 
 
 @login_required
-@ratelimit(key="user", rate="10/m",method="POST", block=True)
+@ratelimit(key="user", rate="30/m",method="POST", block=True)
 def SurveyView(request):
     if request.method == 'POST':
         form = SurveyForm(request.POST)
@@ -45,7 +47,7 @@ def SurveyView(request):
 
 
 @login_required
-@ratelimit(key="user", rate="3/m",method="POST", block=True)
+@ratelimit(key="user", rate="30/m",method="POST", block=True)
 def Question_View(request, survey_id):
     if request.method == 'POST':
         form = QuestionForm(request.POST)
@@ -76,41 +78,41 @@ def Question_View(request, survey_id):
 
 
 @login_required
-@ratelimit(key="user", rate="10/m", block=True)
+@ratelimit(key="user", rate="30/m", block=True)
 def ShowAllSurveys(request):
     surveys = SurveyLink.objects.filter(user=request.user.id)
     return render(request, 'show_all_surveys.html', {'surveys': surveys})
 
 @login_required
-@ratelimit(key="user", rate="10/m", block=True)
+@ratelimit(key="user", rate="30/m", block=True)
 def ShowSurveyView(request, survey_id):
     surveys = SurveyLink.objects.filter(user = request.user)
     for survey in surveys:
-        if str(survey_id) == str(survey.survey_id):
+        if str(survey_id) == str(survey.survey_id):     #-----------------------------------------------------------------------------------------------------------------
             survey = Survey.objects.get(id=survey_id)
-            questions = Question.objects.filter(survey=survey_id)
+            questions = Question.objects.filter(survey=ObjectId(survey_id))
             return render(request, 'show_survey.html', {'survey': survey, 'questions': questions, 'survey_id': survey_id})
         
     
     raise Http404("Page not found")
         
 @login_required
-@ratelimit(key="user", rate="10/m", block=True)
+@ratelimit(key="user", rate="30/m", block=True)
 def DeleteSurvey(request, survey_id):
     try:
         # Delete answers and responses related to this survey
-        responses = Response.objects.filter(survey=survey_id)
+        responses = Response.objects.filter(survey=ObjectId(survey_id))
         for response in responses:
             Answer.objects.filter(response=response.id).delete()
         responses.delete()
 
         # Delete all questions of this survey
-        Question.objects.filter(survey=survey_id).delete()
+        Question.objects.filter(survey=ObjectId(survey_id)).delete()
 
         # Delete the survey itself
-        Survey.objects.filter(id=survey_id).delete()
+        Survey.objects.filter(id=ObjectId(survey_id)).delete()
 
-        # Delete the SurveyLink (if it exists)
+        # Delete the SurveyLink 
         SurveyLink.objects.filter(survey_id=survey_id).delete()
 
         messages.success(request, 'Survey deleted successfully.')
@@ -122,54 +124,104 @@ def DeleteSurvey(request, survey_id):
         return redirect(ShowAllSurveys)
 
 
+
 @login_required
-@ratelimit(key="user", rate="10/m", block=True)
-def BuildDiagram(request, survey_id):
-    graphs = []
+@ratelimit(key="user", rate="30/m", block=True)
+def DownloadSurvey(request, survey_id):
     get_object_or_404(SurveyLink, user=request.user.id, survey_id=survey_id)
-    total_surveys = Response.objects.filter(survey=survey_id).count()
+
     try:
-        questions = Question.objects.filter(survey=survey_id)
-        for question in questions:
-            if question.question_type != 'text':
-                answers = Answer.objects.filter(question=question.id)
-                answer_values = [answer.answer_value for answer in answers]
+        survey_obj = Survey.objects.get(id=survey_id)
+    except Survey.DoesNotExist:
+        raise Http404("Survey not found")
 
-                df = pd.DataFrame(answer_values, columns=["Answer"])
-                count = df["Answer"].value_counts()
-                lebels = count.index.tolist()
-                values = count.values.tolist()
+    questions = Question.objects.filter(survey=survey_obj)
 
-                fig = px.bar(x=lebels, y=values, title=question.text, text=values)
-                fig.update_traces(
-                marker_color='rgb(30,144,255)',
-                marker_line_color='black',
-                marker_line_width=1,
-                width=0.5, 
-                textposition='outside'
-                )
+    output = {
+        "survey_id": str(survey_obj.id),
+        "survey_title": survey_obj.title,
+        "survey_description": survey_obj.description or "",
+        "total_responses": Response.objects.filter(survey=survey_obj).count(),
+        "questions": []
+    }
 
-                fig.update_layout(
-                    height=400,
-                    width=600,
-                    plot_bgcolor='white',
-                    paper_bgcolor='white',
-                    bargap=0.3,
-                    bargroupgap=0.1,
-                    margin=dict(l=50, r=50, t=80, b=50),
-                    title={
-                        'y':0.95,
-                        'x':0.5,
-                        'xanchor':'center',
-                        'yanchor':'top'
-                    }
-                )
+    for question in questions:
+        answers = Answer.objects.filter(question=question)
+        answer_list = [ans.answer_value for ans in answers]
 
-                graph = fig.to_html(full_html=False)
-                graphs.append(graph)
+        output["questions"].append({
+            "question_id": str(question.id),
+            "question_text": question.text,
+            "question_type": question.question_type,
+            "options": question.options or [],
+            "answers": answer_list,
+            "total_answers": len(answer_list)
+        })
 
-        return render(request, 'graphs/build_diagram.html', {'graphs': graphs, 'total_surveys': total_surveys})
+    
+    response = HttpResponse(
+        json.dumps(output, indent=2, ensure_ascii=False),
+        content_type="application/json"
+    )
+    response["Content-Disposition"] = f'attachment; filename="survey_{survey_id}.json"'
+    return response
+    
 
-    except Exception as e:
-        
-        return render(request, 'graphs/build_diagram.html', {'graphs': [], 'total_surveys': total_surveys})
+
+
+@login_required
+@ratelimit(key="user", rate="30/m", block=True)
+def BuildDiagram(request, survey_id):
+    get_object_or_404(SurveyLink, user=request.user.id, survey_id=survey_id)
+
+    try:
+        survey_obj = Survey.objects.get(id=survey_id)
+    except Survey.DoesNotExist:
+        return JsonResponse({"status": "error", "message": "Survey not found"}, status=404)
+
+    total_surveys = Response.objects.filter(survey=survey_obj).count()
+
+    if request.headers.get("X-Requested-With") == "XMLHttpRequest":
+        try:
+           
+            questions = Question.objects.filter(
+                survey=survey_obj,
+                question_type__nin=['text']   
+            )
+
+            chart_data = []
+            for question in questions:
+                answers = Answer.objects.filter(question=question)
+                
+                counts = {}
+                for ans in answers:
+                    val = ans.answer_value
+                    counts[val] = counts.get(val, 0) + 1
+
+                if not counts:
+                    continue  
+
+                chart_data.append({
+                    "question_id": str(question.id),
+                    "question_text": question.text,
+                    "question_type": question.question_type,
+                    "labels": list(counts.keys()),
+                    "values": list(counts.values()),
+                })
+
+            return JsonResponse({
+                "status": "ok",
+                "total_surveys": total_surveys,
+                "charts": chart_data
+            })
+
+        except Exception as e:
+            import traceback
+            traceback.print_exc()
+            return JsonResponse({"status": "error", "message": str(e)}, status=500)
+
+   
+    return render(request, "graphs/build_diagram.html", {
+        "survey_id": survey_id,
+        "total_surveys": total_surveys,
+    })

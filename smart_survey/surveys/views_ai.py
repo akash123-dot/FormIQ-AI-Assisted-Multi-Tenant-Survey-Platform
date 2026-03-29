@@ -16,7 +16,8 @@ from django.shortcuts import get_object_or_404
 from surveys.models import SurveyLink
 from django_ratelimit.decorators import ratelimit
 from smart_survey.settings import GOOGLE_API_KEY
-
+from django.contrib import messages
+from django.contrib.auth.decorators import login_required
 
 class AgentState(TypedDict):
     messages: Annotated[Sequence[BaseMessage], add_messages]
@@ -25,16 +26,19 @@ class AgentState(TypedDict):
 @tool
 def SurveyView(survey_id: str) -> dict:
     """
-    Use this tool whenever you need to fetch survey information or its questions.
+    Fetch survey name and existing questions.
     Input: survey_id (string)
     Output: {"survey_name": str, "questions": [list of question texts]}
     """
-    survey_name = Survey.objects.get(id=survey_id).title
-    questions = Question.objects.filter(survey=survey_id)
-    return{
-            "survey_name": survey_name,
-            "questions": [question.text for question in questions]
+    try:
+        survey_obj = Survey.objects.get(id=survey_id)
+        questions = Question.objects.filter(survey=survey_obj)  
+        return {
+            "survey_name": survey_obj.title,
+            "questions": [q.text for q in questions]
         }
+    except Survey.DoesNotExist:
+        return {"error": f"Survey {survey_id} not found"}
 
 
 tools = [SurveyView]
@@ -101,52 +105,102 @@ graph.add_conditional_edges(
 
 app = graph.compile()
 
+@login_required
 @ratelimit(key="user", rate="10/m", method="POST", block=True)
 def ResultAIView(request, survey_id):
+    get_object_or_404(SurveyLink, user=request.user.id, survey_id=survey_id)
+
+    form = ResultAIForm(request.POST or None)
+
     if request.method == 'POST':
-        form = ResultAIForm(request.POST)
         if form.is_valid():
-            data = form.cleaned_data
-            result = data['result']
-            inputs = {"messages": [HumanMessage(content=f"This is for survey ID {survey_id}. {result}")]}
-            responce = app.invoke(inputs)
-            result = responce['messages'][-1].content
-            result = result[0]["text"]
-            # print(result)
+            user_input = form.cleaned_data['result']   
 
-            if isinstance(result, dict) and 'text' in result:
-                result = result['text']
+            try:
+                inputs = {
+                    "messages": [
+                        HumanMessage(content=f"This is for survey ID {survey_id}. {user_input}")
+                    ]
+                }
+                response = app.invoke(inputs)
 
-            if isinstance(result, str):
-                result = result.strip()
-                if result.startswith("```json"):
-                    result = result.replace("```json", "").replace("```", "").strip()
+               
+                raw = response['messages'][-1].content
 
+                
+                if isinstance(raw, list):
+                    raw = " ".join(
+                        block.get("text", "") for block in raw
+                        if isinstance(block, dict)
+                    )
+
+                raw = raw.strip()
+
+                
+                if raw.startswith("```"):
+                    raw = raw.split("```")[1]
+                    if raw.startswith("json"):
+                        raw = raw[4:]
+                    raw = raw.strip()
+
+               
                 try:
-                    data = json.loads(result)
-        
-                except json.JSONDecodeError:
-                    data = [{"text": result}]
+                    questions = json.loads(raw)
+                    if not isinstance(questions, list):
+                        raise ValueError("Expected a JSON list")
+                except (json.JSONDecodeError, ValueError):
+                    messages.error(request, "AI returned an unexpected format. Please try again.")
+                    return render(request, 'result_ai.html', {
+                        'form': form,
+                        'survey_id': survey_id
+                    })
 
-                json_data = json.dumps(data)
-                # save data in session
-                request.session['result'] = json.dumps(data)
-              
+                if not questions:
+                    messages.error(request, "AI could not generate questions. Try a different prompt.")
+                    return render(request, 'result_ai.html', {
+                        'form': form,
+                        'survey_id': survey_id
+                    })
 
-            return render(request, 'result_ai.html', {'form': form, 'data': data, 'survey_id': survey_id, 'json_data': json_data})
-    
-    else:
-        form = ResultAIForm()
-        # get_object_or_404(SurveyLink, user = request.user.id, survey_id=survey_id)
-    return render(request, 'result_ai.html', {'form': form, 'survey_id': survey_id})
+                
+                request.session['result'] = json.dumps(questions)
+                json_data = json.dumps(questions)
 
+                return render(request, 'result_ai.html', {
+                    'form': form,
+                    'data': questions,     
+                    'json_data': json_data,
+                    'survey_id': survey_id,
+                })
+
+            except Exception as e:
+                error_msg = str(e).lower()
+
+                if "quota" in error_msg or "limit" in error_msg or "429" in error_msg:
+                    messages.error(request, "AI token limit reached. Please wait and try again.")
+                elif "timeout" in error_msg:
+                    messages.error(request, "AI request timed out. Please try again.")
+                elif "api" in error_msg or "key" in error_msg:
+                    messages.error(request, "AI service is unavailable. Please try later.")
+                else:
+                    messages.error(request, f"Something went wrong: {str(e)}")
+
+                return render(request, 'result_ai.html', {
+                    'form': form,
+                    'survey_id': survey_id
+                })
+
+    return render(request, 'result_ai.html', {
+        'form': form,
+        'survey_id': survey_id
+    })
 
 
 def SaveAIQuestions(request, survey_id):
 
     if request.method == 'POST' and 'save_single' in request.POST:
 
-        # get JSON STRING from session
+     
         result_json = request.session.get('result')
 
         try:

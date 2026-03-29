@@ -9,7 +9,7 @@ class SurveyLink(models.Model):
     name = models.CharField(max_length=255)
     survey_id = models.CharField(max_length=255)
     unique_id = models.UUIDField(default=uuid4, editable=False, primary_key=True, serialize=False)
-    link = models.CharField(unique=True, null=True, blank=True)
+    link = models.CharField(unique=True, null=True, blank=True, max_length=500)
     created_at = models.DateTimeField(auto_now_add=True)
 
 
