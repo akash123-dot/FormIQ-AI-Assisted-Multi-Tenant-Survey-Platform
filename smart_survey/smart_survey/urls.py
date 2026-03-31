@@ -41,6 +41,10 @@ urlpatterns = [
 
     # delete my survey
     path("delete-survey/<str:survey_id>", views.DeleteSurvey, name='delete-survey'),
+
+    # delete particular question
+    path(
+    "surveys/<str:survey_id>/question/<str:question_id>/delete/", views.DeleteQuestion, name="delete-question"),
     
 
     # Build charts

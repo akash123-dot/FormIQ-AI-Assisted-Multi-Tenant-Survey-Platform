@@ -6,7 +6,7 @@ from bson.objectid import ObjectId
 from django.contrib import messages
 # import plotly.express as px
 # import pandas as pd
-from django.contrib.auth.models import User
+# from django.contrib.auth.models import User
 from django.contrib.auth.decorators import login_required
 from django.http import HttpResponseNotFound, Http404, HttpResponse
 from django.shortcuts import get_object_or_404
@@ -86,15 +86,45 @@ def ShowAllSurveys(request):
 @login_required
 @ratelimit(key="user", rate="30/m", block=True)
 def ShowSurveyView(request, survey_id):
-    surveys = SurveyLink.objects.filter(user = request.user)
-    for survey in surveys:
-        if str(survey_id) == str(survey.survey_id):     #-----------------------------------------------------------------------------------------------------------------
-            survey = Survey.objects.get(id=survey_id)
-            questions = Question.objects.filter(survey=ObjectId(survey_id))
-            return render(request, 'show_survey.html', {'survey': survey, 'questions': questions, 'survey_id': survey_id})
-        
+    get_object_or_404(SurveyLink, user=request.user.id, survey_id=survey_id)
+
+    try:
+        survey = Survey.objects.get(id=survey_id)
+        questions = Question.objects.filter(survey=survey)
+    except Survey.DoesNotExist:
+        raise Http404("Survey not found")
     
-    raise Http404("Page not found")
+    # survey = Survey.objects.get(id=survey_id)
+    # questions = Question.objects.filter(survey=ObjectId(survey_id))
+    return render(request, 'show_survey.html', {'survey': survey, 'questions': questions, 'survey_id': survey_id})
+    
+    
+  
+
+@login_required
+@ratelimit(key="user", rate="20/m", method="POST", block=True)
+def DeleteQuestion(request, survey_id, question_id):
+    
+    get_object_or_404(SurveyLink, user=request.user.id, survey_id=survey_id)
+
+    if request.method == "POST":
+        try:
+            survey_obj = Survey.objects.get(id=survey_id)
+            question = Question.objects.get(id=question_id, survey=survey_obj)
+            
+            Answer.objects.filter(question=question).delete()
+            
+            question.delete()
+            messages.success(request, "Question deleted successfully.")
+
+        except Question.DoesNotExist:
+            messages.error(request, "Question not found.")
+        except Exception as e:
+            messages.error(request, f"Could not delete question")
+
+    return redirect("show-survey", survey_id=survey_id)
+
+
         
 @login_required
 @ratelimit(key="user", rate="30/m", block=True)

@@ -82,28 +82,31 @@ WSGI_APPLICATION = 'smart_survey.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
-    }
-}
+# DATABASES = {
+#     'default': {
+#         'ENGINE': 'django.db.backends.sqlite3',
+#         'NAME': BASE_DIR / 'db.sqlite3',
+#     }
+# }
 
 load_dotenv(BASE_DIR / ".env")
 
-# DATABASES = {
-#     "default": {
-#         "ENGINE": "django.db.backends.postgresql",
-#         "NAME": os.getenv("DB_NAME"),
-#         "USER": os.getenv("DB_USER"),
-#         "PASSWORD": os.getenv("DB_PASSWORD"),
-#         "HOST": os.getenv("DB_HOST"),
-#         "PORT": os.getenv("DB_PORT"),
-#         "OPTIONS": {
-#             "sslmode": os.getenv("DB_SSLMODE", "require"),
-#         },
-#     }
-# }
+DATABASES = {
+    "default": {
+        "ENGINE": "django.db.backends.postgresql",
+        "NAME": os.getenv("DB_NAME"),
+        "USER": os.getenv("DB_USER"),
+        "PASSWORD": os.getenv("DB_PASSWORD"),
+        "HOST": os.getenv("DB_HOST"),
+        "PORT": os.getenv("DB_PORT"),
+        "OPTIONS": {
+            "sslmode": os.getenv("DB_SSLMODE", "require"),
+        },
+    }
+}
+
+
+
 
 
 
@@ -156,18 +159,18 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 from mongoengine import connect
 
-# MONGODB_URI = os.getenv("MONGODB_URI")
+MONGODB_URI = os.getenv("MONGODB_URI")
 
-# if MONGODB_URI:
-#     connect(host=MONGODB_URI)
-# else:
-#     raise Exception("MONGODB_URI is not set")
+if MONGODB_URI:
+    connect(host=MONGODB_URI)
+else:
+    raise Exception("MONGODB_URI is not set")
 
 
-connect(
-    db="survey_app",
-    host="mongodb://localhost:27017/survey_app",  
-)
+# connect(
+#     db="survey_app",
+#     host="mongodb://localhost:27017/survey_app",  
+# )
 
 
 
