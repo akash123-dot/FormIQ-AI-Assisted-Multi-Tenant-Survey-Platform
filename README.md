@@ -13,7 +13,7 @@
 [![Solo Build](https://img.shields.io/badge/Built%20by-Solo%20Developer-blueviolet?style=flat)]()
 
 🌐 **Live Demo:** `[link coming soon]`
-📁 **GitHub:** `[[repo link coming soon](https://github.com/akash123-dot/FormIQ-AI-Assisted-Multi-Tenant-Survey-Platform/edit/main/README.md)]`
+📁 **GitHub:** `[https://github.com/akash123-dot/FormIQ-AI-Assisted-Multi-Tenant-Survey-Platform/tree/main?tab=readme-ov-file]`
 
 ---
 
@@ -82,7 +82,7 @@ flowchart TD
 
 > **📹 GIF Placeholder — Survey Builder: Create survey → Choose mode → generates questions → Save to MongoDB**
 <p align="center">
-    ![Image](https://github.com/user-attachments/assets/435f1c8f-ae49-4c81-a521-40038ef20091)
+  <img src="https://github.com/user-attachments/assets/435f1c8f-ae49-4c81-a521-40038ef20091" width="700"/>
 </p>
 
 ### Step 1 — Create a Survey
@@ -124,7 +124,7 @@ During building, the user can **view the live survey** at any point to see exact
 
 > **📹 GIF Placeholder — AI Builder: Enter prompt → Agent generates questions → User saves selected or all**
 <p align="center">
-    ![Image](https://github.com/user-attachments/assets/8103b315-5f4f-4367-b3b2-df6231fa96a7)
+  <img src="https://github.com/user-attachments/assets/8103b315-5f4f-4367-b3b2-df6231fa96a7" width="700"/>
 </p>
 
 The user specifies:
@@ -182,7 +182,8 @@ Submissions are saved to **MongoDB** alongside the survey's question collection.
 
 > **📹 GIF Placeholder — Dashboard & Analytics: Survey list → Click survey → View response charts → Export JSON**
 <p align="center">
-    ![Image](https://github.com/user-attachments/assets/aeb267c7-e9f1-4bdd-9b37-080dc2ee4a29)
+  <img src="https://github.com/user-attachments/assets/aeb267c7-e9f1-4bdd-9b37-080dc2ee4a29" width="700"/>
+ 
 </p>
 ---
 
@@ -335,4 +336,4 @@ GEMINI_API_KEY=your-gemini-api-key
 
 **Akash** — Built solo end to end.
 
-GitHub: `[link coming soon]` · Built with Django, PostgreSQL, MongoDB, LangGraph, Gemini, Redis
+GitHub: `[https://github.com/akash123-dot/FormIQ-AI-Assisted-Multi-Tenant-Survey-Platform/tree/main?tab=readme-ov-file]` · Built with Django, PostgreSQL, MongoDB, LangGraph, Gemini, Redis
