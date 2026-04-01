@@ -188,35 +188,35 @@ HANDLER404 = 'surveys.views.custom_404'
 
 
 
-REDIS_URL = os.getenv(
-    "REDIS_URL",
-    "redis://my-local-redis:6379/0"  
-)
-
-CACHES = {
-    "default": {
-        "BACKEND": "django_redis.cache.RedisCache",
-        "LOCATION": "redis://127.0.0.1:6379/0",
-    }
-}
-
-
-# REDIS_URL = os.getenv("REDIS_URL")
-
+# REDIS_URL = os.getenv(
+#     "REDIS_URL",
+#     "redis://my-local-redis:6379/0"  
+# )
 
 # CACHES = {
 #     "default": {
 #         "BACKEND": "django_redis.cache.RedisCache",
-#         "LOCATION": REDIS_URL,
-#         "OPTIONS": {
-#             "CLIENT_CLASS": "django_redis.client.DefaultClient",
-           
-#             "CONNECTION_POOL_KWARGS": {
-#                 "ssl_cert_reqs": None
-#             }
-#         }
+#         "LOCATION": "redis://127.0.0.1:6379/0",
 #     }
 # }
+
+
+REDIS_URL = os.getenv("REDIS_URL")
+
+
+CACHES = {
+    "default": {
+        "BACKEND": "django_redis.cache.RedisCache",
+        "LOCATION": REDIS_URL,
+        "OPTIONS": {
+            "CLIENT_CLASS": "django_redis.client.DefaultClient",
+           
+            "CONNECTION_POOL_KWARGS": {
+                "ssl_cert_reqs": None
+            }
+        }
+    }
+}
 
 
 RATELIMIT_USE_CACHE = "default"
@@ -238,11 +238,11 @@ MESSAGE_TAGS = {
 
 
 
-# SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 
 
-# SECURE_SSL_REDIRECT = True
+SECURE_SSL_REDIRECT = True
 
 
-# SESSION_COOKIE_SECURE = True
-# CSRF_COOKIE_SECURE = True
+SESSION_COOKIE_SECURE = True
+CSRF_COOKIE_SECURE = True
