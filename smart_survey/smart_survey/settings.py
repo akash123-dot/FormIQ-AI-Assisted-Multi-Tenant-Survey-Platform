@@ -159,10 +159,10 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 from mongoengine import connect
 
-mongo_pass = os.getenv("MONGODB_PASS")
 
 
-MONGODB_URI = os.getenv("MONGODB_URI", "mongodb+srv://deyakash473_db_user:"+mongo_pass+"@smart-survey.fuki9vt.mongodb.net/SmartSurveyApp?retryWrites=true&w=majority")
+
+MONGODB_URI = os.getenv("MONGODB_URI")
 
 if MONGODB_URI:
     connect(host=MONGODB_URI)
