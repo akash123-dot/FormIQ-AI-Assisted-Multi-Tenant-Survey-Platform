@@ -166,6 +166,9 @@ if MONGODB_URI:
 else:
     raise Exception("MONGODB_URI is not set")
 
+import sys
+print("MONGODB_URI present:", bool(os.getenv("MONGODB_URI")), file=sys.stderr)
+
 
 # connect(
 #     db="survey_app",
