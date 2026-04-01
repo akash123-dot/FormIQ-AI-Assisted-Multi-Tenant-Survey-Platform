@@ -159,7 +159,10 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 from mongoengine import connect
 
-MONGODB_URI = os.getenv("MONGODB_URI")
+mongo_pass = os.getenv("MONGODB_PASS")
+
+
+MONGODB_URI = os.getenv("MONGODB_URI", "mongodb+srv://deyakash473_db_user:"+mongo_pass+"@smart-survey.fuki9vt.mongodb.net/SmartSurveyApp?retryWrites=true&w=majority")
 
 if MONGODB_URI:
     connect(host=MONGODB_URI)
@@ -167,7 +170,7 @@ else:
     raise Exception("MONGODB_URI is not set")
 
 
-print("MONGODB_URI present:", bool(os.getenv("MONGODB_URI")), file=sys.stderr)
+# print("MONGODB_URI present:", bool(os.getenv("MONGODB_URI")), file=sys.stderr)
 
 
 # connect(
@@ -256,8 +259,8 @@ CSRF_COOKIE_SECURE = True
 
 
 
-print("=== ENV VARS ===", file=sys.stderr)
-for k, v in os.environ.items():
-    if "MONGO" in k or "REDIS" in k or "DB_" in k:
-        print(f"  {k}={v[:10]}...", file=sys.stderr)
-print("================", file=sys.stderr)
+# print("=== ENV VARS ===", file=sys.stderr)
+# for k, v in os.environ.items():
+#     if "MONGO" in k or "REDIS" in k or "DB_" in k:
+#         print(f"  {k}={v[:10]}...", file=sys.stderr)
+# print("================", file=sys.stderr)
