@@ -9,7 +9,7 @@ https://docs.djangoproject.com/en/5.2/topics/settings/
 For the full list of settings and their values, see
 https://docs.djangoproject.com/en/5.2/ref/settings/
 """
-import os
+import os, sys
 # from dotenv import load_dotenv
 from django.contrib.messages import constants as messages
 # load_dotenv()
@@ -166,7 +166,7 @@ if MONGODB_URI:
 else:
     raise Exception("MONGODB_URI is not set")
 
-import sys
+
 print("MONGODB_URI present:", bool(os.getenv("MONGODB_URI")), file=sys.stderr)
 
 
@@ -249,3 +249,15 @@ SECURE_SSL_REDIRECT = True
 
 SESSION_COOKIE_SECURE = True
 CSRF_COOKIE_SECURE = True
+
+
+
+
+
+
+
+print("=== ENV VARS ===", file=sys.stderr)
+for k, v in os.environ.items():
+    if "MONGO" in k or "REDIS" in k or "DB_" in k:
+        print(f"  {k}={v[:10]}...", file=sys.stderr)
+print("================", file=sys.stderr)
