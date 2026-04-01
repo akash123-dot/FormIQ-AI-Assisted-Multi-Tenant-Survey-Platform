@@ -10,9 +10,9 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/5.2/ref/settings/
 """
 import os
-from dotenv import load_dotenv
+# from dotenv import load_dotenv
 from django.contrib.messages import constants as messages
-load_dotenv()
+# load_dotenv()
 
 from pathlib import Path
 
@@ -29,7 +29,7 @@ SECRET_KEY = os.getenv('SECRET_KEY', 'fallback-key-for-local-dev-only')
 
 # SECURITY WARNING: don't run with debug turned on in production!
 # DEBUG = False
-DEBUG = True
+DEBUG = os.getenv("DEBUG", "False") == "True"
 
 ALLOWED_HOSTS = ['smart-survey-6raf.onrender.com', 'localhost', '127.0.0.1', 'web-production-c59ae.up.railway.app']
 
@@ -89,7 +89,7 @@ WSGI_APPLICATION = 'smart_survey.wsgi.application'
 #     }
 # }
 
-load_dotenv(BASE_DIR / ".env")
+# load_dotenv(BASE_DIR / ".env")
 
 DATABASES = {
     "default": {
