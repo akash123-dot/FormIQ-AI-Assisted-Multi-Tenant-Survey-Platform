@@ -31,7 +31,8 @@ SECRET_KEY = os.getenv('SECRET_KEY', 'fallback-key-for-local-dev-only')
 # DEBUG = False
 DEBUG = os.getenv("DEBUG", "False") == "True"
 
-ALLOWED_HOSTS = ['smart-survey-6raf.onrender.com', 'localhost', '127.0.0.1', 'web-production-c59ae.up.railway.app']
+ALLOWED_HOSTS = ['localhost', '127.0.0.1'] + os.getenv('ALLOWED_HOSTS', '').split(',')
+
 
 
 # Application definition
