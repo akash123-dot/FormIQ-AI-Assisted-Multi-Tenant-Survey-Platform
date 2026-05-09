@@ -12,7 +12,7 @@
 [![Railway](https://img.shields.io/badge/Deployed%20on-Railway-0B0D0E?style=flat)](https://railway.app/)
 [![Solo Build](https://img.shields.io/badge/Built%20by-Solo%20Developer-blueviolet?style=flat)]()
 
-🌐 **Live Demo:** `[link coming soon]`
+🌐 **Live Demo:** `[https://smart-survey.up.railway.app/]`
 📁 **GitHub:** `[https://github.com/akash123-dot/FormIQ-AI-Assisted-Multi-Tenant-Survey-Platform/tree/main?tab=readme-ov-file]`
 
 ---
