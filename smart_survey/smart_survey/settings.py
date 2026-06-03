@@ -80,31 +80,39 @@ TEMPLATES = [
 WSGI_APPLICATION = 'smart_survey.wsgi.application'
 
 
+
+from dotenv import load_dotenv
+
+load_dotenv()
+
+
+
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 
-# DATABASES = {
-#     'default': {
-#         'ENGINE': 'django.db.backends.sqlite3',
-#         'NAME': BASE_DIR / 'db.sqlite3',
-#     }
-# }
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': BASE_DIR / 'db.sqlite3',
+    }
+}
 
 # load_dotenv(BASE_DIR / ".env")
 
-DATABASES = {
-    "default": {
-        "ENGINE": "django.db.backends.postgresql",
-        "NAME": os.getenv("DB_NAME"),
-        "USER": os.getenv("DB_USER"),
-        "PASSWORD": os.getenv("DB_PASSWORD"),
-        "HOST": os.getenv("DB_HOST"),
-        "PORT": os.getenv("DB_PORT"),
-        "OPTIONS": {
-            "sslmode": os.getenv("DB_SSLMODE", "require"),
-        },
-    }
-}
+# DATABASES = {
+#     "default": {
+#         "ENGINE": "django.db.backends.postgresql",
+#         "NAME": os.getenv("DB_NAME"),
+#         "USER": os.getenv("DB_USER"),
+#         "PASSWORD": os.getenv("DB_PASSWORD"),
+#         "HOST": os.getenv("DB_HOST"),
+#         "PORT": os.getenv("DB_PORT"),
+#         "CONN_MAX_AGE": 0,
+#         "OPTIONS": {
+#             "sslmode": os.getenv("DB_SSLMODE", "require"),
+#         },
+#     }
+# }
 
 
 
@@ -163,21 +171,21 @@ from mongoengine import connect
 
 
 
-MONGODB_URI = os.getenv("MONGODB_URI")
+# MONGODB_URI = os.getenv("MONGODB_URI")
 
-if MONGODB_URI:
-    connect(host=MONGODB_URI)
-else:
-    raise Exception("MONGODB_URI is not set")
+# if MONGODB_URI:
+#     connect(host=MONGODB_URI)
+# else:
+#     raise Exception("MONGODB_URI is not set")
 
 
 # print("MONGODB_URI present:", bool(os.getenv("MONGODB_URI")), file=sys.stderr)
 
 
-# connect(
-#     db="survey_app",
-#     host="mongodb://localhost:27017/survey_app",  
-# )
+connect(
+    db="survey_app",
+    host="mongodb://localhost:27017/survey_app",  
+)
 
 
 
@@ -217,8 +225,12 @@ CACHES = {
         "LOCATION": REDIS_URL,
         "OPTIONS": {
             "CLIENT_CLASS": "django_redis.client.DefaultClient",
+            "IGNORE_EXCEPTIONS": True,
+            "SOCKET_TIMEOUT": 3.0,
+            "SOCKET_CONNECT_TIMEOUT": 3.0,
            
             "CONNECTION_POOL_KWARGS": {
+                "max_connections": 1,
                 "ssl_cert_reqs": None
             }
         }
@@ -231,8 +243,9 @@ RATELIMIT_USE_CACHE = "default"
 
 
 
-GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")
+# GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")
 
+GOOGLE_API_KEY = os.environ.get('GOOGLE_API_KEY')
 
 
 
@@ -245,14 +258,14 @@ MESSAGE_TAGS = {
 
 
 
-SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+# SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 
 
-SECURE_SSL_REDIRECT = True
+# SECURE_SSL_REDIRECT = True
 
 
-SESSION_COOKIE_SECURE = True
-CSRF_COOKIE_SECURE = True
+# SESSION_COOKIE_SECURE = True
+# CSRF_COOKIE_SECURE = True
 
 
 

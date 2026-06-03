@@ -11,13 +11,14 @@ from .forms import ResultAIForm
 from django.shortcuts import render, redirect
 import json
 from surveys.views import Question_View
-from django.http import HttpResponse
+from django.http import HttpResponse, HttpResponseForbidden, JsonResponse
 from django.shortcuts import get_object_or_404
 from surveys.models import SurveyLink
 from django_ratelimit.decorators import ratelimit
 from smart_survey.settings import GOOGLE_API_KEY
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
+
 
 class AgentState(TypedDict):
     messages: Annotated[Sequence[BaseMessage], add_messages]
@@ -106,8 +107,11 @@ graph.add_conditional_edges(
 app = graph.compile()
 
 @login_required
-@ratelimit(key="user", rate="10/m", method="POST", block=True)
+@ratelimit(key="user", rate="10/m", method="POST", block=False)
 def ResultAIView(request, survey_id):
+    if getattr(request, 'limited', False):
+        return HttpResponseForbidden("Too many requests. Please try again in a minute.")
+
     get_object_or_404(SurveyLink, user=request.user.id, survey_id=survey_id)
 
     form = ResultAIForm(request.POST or None)
@@ -162,8 +166,8 @@ def ResultAIView(request, survey_id):
                         'survey_id': survey_id
                     })
 
-                
-                request.session['result'] = json.dumps(questions)
+                #remove session
+                # request.session['result'] = json.dumps(questions)
                 json_data = json.dumps(questions)
 
                 return render(request, 'result_ai.html', {
@@ -196,45 +200,60 @@ def ResultAIView(request, survey_id):
     })
 
 
+@login_required
+@ratelimit(key="user", rate="30/m", method="POST", block=False)
 def SaveAIQuestions(request, survey_id):
+    # 1. Fail-open execution for rate limiter checks
+    try:
+        if getattr(request, 'limited', False):
+            return JsonResponse({
+                "status": "error", 
+                "message": "Rate limit exceeded. Please wait a moment before saving more questions."
+            }, status=429)
+    except Exception as e:
+        # logger.error(f"Rate-limiting check failed gracefully: {e}")
+        pass
 
-    if request.method == 'POST' and 'save_single' in request.POST:
-
-     
-        result_json = request.session.get('result')
-
+    if request.method == 'POST':
         try:
-            questions = json.loads(result_json)
-        except:
-            return HttpResponse("Invalid JSON in session", status=400)
+            # Load JSON content directly from incoming request body binary stream
+            body_data = json.loads(request.body)
+            
+            question_text = body_data.get('text')
+            question_type = body_data.get('question_type')
+            question_options = body_data.get('options', [])
 
-        question_name = request.POST.get('text')
+            if not question_text or not question_type:
+                return JsonResponse({"status": "error", "message": "Required content parameters are missing."}, status=400)
 
-        for q in questions:
-            if q.get('text') == question_name:
+            # 2. Database interaction (No Session dependency remaining)
+            Question.objects.create(
+                survey=survey_id,
+                text=question_text,
+                question_type=question_type,
+                options=question_options,
+                is_ai_generated=True
+            )
 
-                Question.objects.create(
-                    survey=survey_id,
-                    text=q.get('text'),
-                    question_type=q.get('question_type'),
-                    options=q.get('options'),
-                    is_ai_generated=True
-                )
+            return JsonResponse({
+                "status": "success", 
+                "message": "Question saved to pipeline database"
+            }, status=201)
 
-        return render(
-            request,
-            'result_ai.html',
-            {
-                'data': questions,          
-                'survey_id': survey_id,
-                'json_data': result_json    
-            }
-        )
+        except json.JSONDecodeError:
+            return JsonResponse({"status": "error", "message": "Malformed request structure data payload."}, status=400)
+        except Exception as e:
+            # logger.error(f"Server database error during serverless write: {e}")
+            return JsonResponse({"status": "error", "message": "Server database error."}, status=500)
 
-    return HttpResponse("Invalid request", status=400)
+    return JsonResponse({"status": "error", "message": "Method not allowed."}, status=405)
 
-
+@login_required
+@ratelimit(key="user", rate="30/m", method="POST", block=False)
 def SaveAllAiQuestions(request, survey_id):
+    if getattr(request, 'limited', False):
+        return HttpResponseForbidden("Too many requests. Please try again in a minute.")
+
     if request.method == 'POST':
         raw_data = request.POST.get('data')
 
@@ -255,5 +274,7 @@ def SaveAllAiQuestions(request, survey_id):
                 options=options,
                 is_ai_generated=True
             )
+
+        messages.success(request, "All questions have been saved.")
 
         return redirect(Question_View, survey_id=survey_id)

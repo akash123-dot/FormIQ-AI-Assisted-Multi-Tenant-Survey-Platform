@@ -334,6 +334,8 @@
 
     {% if data %}
         
+       
+        
         <div class="bulk-action-bar">
             <div>
                 <h4 style="margin:0; font-weight:700; color: #276749;">AI Suggestions Ready</h4>
@@ -349,54 +351,53 @@
         <hr style="margin: 30px 0; border-top: 1px solid #e2e8f0; opacity: 0.5;">
 
         {% for item in data %}
-            <form method="post" action="{% url 'save-question' survey_id %}">
-                {% csrf_token %}
+            <div class="ai-question-card" id="q-card-{{ forloop.counter }}">
+                
+                <p class="question-text">{{ item.text }}</p>
 
-                <div class="ai-question-card">
+                {% if item.options %}
+                    <ul class="options-list" style="list-style: none; padding-left: 0;">
+                    {% if item.question_type == 'single_choice' %}
+                        {% for option in item.options %}
+                            <li>
+                                <label style="margin:0; cursor: default;">
+                                    <input type="radio" disabled style="margin-right: 8px;">
+                                    {{ option }}
+                                </label>
+                            </li>
+                        {% endfor %}
                     
-                    <p class="question-text">{{ item.text }}</p>
-                    <input type="hidden" name="text" value="{{ item.text }}">
-                    <input type="hidden" name="question_type" value="{{ item.question_type }}">
-
-                    {% if item.options %}
-                        <ul class="options-list" style="list-style: none; padding-left: 0;">
-                        {% if item.question_type == 'single_choice' %}
-                            {% for option in item.options %}
-                                <li>
-                                    <label style="margin:0; cursor: default;">
-                                        <input type="radio" disabled style="margin-right: 8px;">
-                                        {{ option }}
-                                    </label>
-                                </li>
-                            {% endfor %}
-                            <input type="hidden" name="options" value="{{ item.options|join:',' }}">
-                        
-                        {% elif item.question_type == 'multiple_choice' %}
-                            {% for option in item.options %}
-                                <li>
-                                    <label style="margin:0; cursor: default;">
-                                        <input type="checkbox" disabled style="margin-right: 8px;">
-                                        {{ option }}
-                                    </label>
-                                </li>
-                            {% endfor %}
-                            <input type="hidden" name="options" value="{{ item.options|join:',' }}">
-                        {% endif %}
-                        </ul>
-
-                    {% else %}
-                        <input type="text" disabled placeholder="Participants will answer here...">
+                    {% elif item.question_type == 'multiple_choice' %}
+                        {% for option in item.options %}
+                            <li>
+                                <label style="margin:0; cursor: default;">
+                                    <input type="checkbox" disabled style="margin-right: 8px;">
+                                    {{ option }}
+                                </label>
+                            </li>
+                        {% endfor %}
                     {% endif %}
+                    </ul>
 
-                    <button type="submit" name="save_single" class="btn-save-single">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" class="me-1" viewBox="0 0 16 16">
-                            <path d="M10.97 4.97a.75.75 0 0 1 1.07 1.05l-3.99 4.99a.75.75 0 0 1-1.08.02L4.324 8.384a.75.75 0 1 1 1.06-1.06l2.094 2.093 3.473-4.425a.267.267 0 0 1 .02-.022z"/>
-                        </svg>
-                        Save This Question
-                    </button>
+                {% else %}
+                    <input type="text" disabled placeholder="Participants will answer here...">
+                {% endif %}
 
-                </div>
-            </form>
+                <div class="save-status-msg" id="status-msg-{{ forloop.counter }}" style="margin-top: 10px; font-size: 0.9rem; font-weight: 600;"></div>
+
+                <button type="button" 
+                        class="btn-save-single" 
+                        onclick="saveSingleQuestion('{{ forloop.counter }}')"
+                        data-url="{% url 'save-question' survey_id %}"  data-text="{{ item.text }}"
+                        data-type="{{ item.question_type }}"
+                        data-options="{{ item.options|join:'|||' }}">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" class="me-1" viewBox="0 0 16 16">
+                        <path d="M10.97 4.97a.75.75 0 0 1 1.07 1.05l-3.99 4.99a.75.75 0 0 1-1.08.02L4.324 8.384a.75.75 0 1 1 1.06-1.06l2.094 2.093 3.473-4.425a.267.267 0 0 1 .02-.022z"/>
+                    </svg>
+                    Save This Question
+                </button>
+
+            </div>
         {% endfor %}
     {% endif %}
 
@@ -416,34 +417,91 @@
 
 <script>
     document.addEventListener('DOMContentLoaded', function () {
+        // --- Existing Loading Overlay Logic ---
         const form = document.querySelector('.prompt-card form');
-        if (!form) return;
+        if (form) {
+            form.addEventListener('submit', function () {
+                const overlay = document.getElementById('loading-overlay');
+                const btn = document.getElementById('generate-btn');
 
-        form.addEventListener('submit', function () {
-            const overlay = document.getElementById('loading-overlay');
-            const btn = document.getElementById('generate-btn');
+                const messages = ["AI is thinking", "Reading your survey", "Crafting questions", "Almost ready"];
+                let i = 0;
+                const textEl = overlay.querySelector('.loading-text');
 
-            const messages = [
-                "AI is thinking",
-                "Reading your survey",
-                "Crafting questions",
-                "Almost ready",
-            ];
+                overlay.classList.add('active');
+                setTimeout(() => { btn.disabled = true; }, 10);
 
-            let i = 0;
-            const textEl = overlay.querySelector('.loading-text');
-
-            overlay.classList.add('active');
-
-            // Small delay so browser registers the submit BEFORE we disable
-            setTimeout(() => { btn.disabled = true; }, 10);
-
-            setInterval(() => {
-                i = (i + 1) % messages.length;
-                textEl.childNodes[0].nodeValue = messages[i];
-            }, 2500);
-        });
+                setInterval(() => {
+                    i = (i + 1) % messages.length;
+                    textEl.childNodes[0].nodeValue = messages[i];
+                }, 2500);
+            });
+        }
     });
+
+    // --- New Asynchronous Single Question Save Handler ---
+    function saveSingleQuestion(counterId) {
+    const card = document.getElementById(`q-card-${counterId}`);
+    const button = card.querySelector('.btn-save-single');
+    const msgElement = document.getElementById(`status-msg-${counterId}`);
+
+    // Read variables from button data attributes
+    const targetUrl = button.getAttribute('data-url'); // <--- Reads {% url 'save-question' survey_id %}
+    const questionText = button.getAttribute('data-text');
+    const questionType = button.getAttribute('data-type');
+    const rawOptions = button.getAttribute('data-options');
+    
+    const questionOptions = rawOptions ? rawOptions.split('|||') : [];
+
+    // UI Feedback loading states
+    button.disabled = true;
+    button.style.opacity = "0.6";
+    msgElement.innerHTML = `<span style="color: #4a5568;">Saving to database...</span>`;
+
+    // Extract native Django CSRF Token from document cookies
+    const csrftoken = document.cookie.split('; ')
+        .find(row => row.startsWith('csrftoken='))
+        ?.split('=')[1];
+
+    // Fire the background network request to the exact Django URL route match
+    fetch(targetUrl, {  
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': csrftoken
+        },
+        body: JSON.stringify({
+            text: questionText,
+            question_type: questionType,
+            options: questionOptions
+        })
+    })
+    .then(response => response.json().then(data => ({ status: response.status, body: data })))
+    .then(result => {
+        if (result.status === 201 || result.body.status === 'success') {
+            // Success State handling
+            msgElement.innerHTML = `<span style="color: #38a169;">✓ Saved successfully!</span>`;
+            button.innerHTML = `Saved`;
+            button.style.backgroundColor = "#e2e8f0";
+            button.style.color = "#a0aec0";
+            button.style.borderColor = "#e2e8f0";
+            button.onclick = null; 
+            
+            setTimeout(() => { card.style.opacity = '0.7'; }, 1000);
+        } else {
+            // Error handling (e.g., validation issue or rate limit)
+            msgElement.innerHTML = `<span style="color: #e53e3e;">✕ ${result.body.message || 'Error saving.'}</span>`;
+            button.disabled = false;
+            button.style.opacity = "1";
+        }
+    })
+    .catch(error => {
+        console.error("AJAX Error:", error);
+        msgElement.innerHTML = `<span style="color: #e53e3e;">✕ Network failure. Please retry.</span>`;
+        button.disabled = false;
+        button.style.opacity = "1";
+    });
+}
 </script>
 
 {% endblock %}

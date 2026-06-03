@@ -13,8 +13,9 @@ from django.shortcuts import get_object_or_404
 from django_ratelimit.decorators import ratelimit
 from django.http import JsonResponse
 import json 
+from django.http import HttpResponseForbidden
 
-@ratelimit(key="user_or_ip", rate="60/m", block=True)
+@ratelimit(key="user_or_ip", rate="60/m", block=False)
 def home(request):
     return render(request, 'home.html')
 
@@ -23,8 +24,11 @@ def custom_404(request, exception):
 
 
 @login_required
-@ratelimit(key="user", rate="30/m",method="POST", block=True)
+@ratelimit(key="user", rate="30/m",method="POST", block=False)
 def SurveyView(request):
+    if getattr(request, 'limited', False):
+        return HttpResponseForbidden("Too many requests. Please try again in a minute.")
+
     if request.method == 'POST':
         form = SurveyForm(request.POST)
         if form.is_valid():
@@ -47,8 +51,12 @@ def SurveyView(request):
 
 
 @login_required
-@ratelimit(key="user", rate="30/m",method="POST", block=True)
+@ratelimit(key="user", rate="30/m",method="POST", block=False)
 def Question_View(request, survey_id):
+    if getattr(request, 'limited', False):
+        return HttpResponseForbidden("Too many requests. Please try again in a minute.")
+
+
     if request.method == 'POST':
         form = QuestionForm(request.POST)
         if form.is_valid():
@@ -78,14 +86,20 @@ def Question_View(request, survey_id):
 
 
 @login_required
-@ratelimit(key="user", rate="30/m", block=True)
+@ratelimit(key="user", rate="30/m", block=False)
 def ShowAllSurveys(request):
+    if getattr(request, 'limited', False):
+        return HttpResponseForbidden("Too many requests. Please try again in a minute.")
+
     surveys = SurveyLink.objects.filter(user=request.user.id)
     return render(request, 'show_all_surveys.html', {'surveys': surveys})
 
 @login_required
-@ratelimit(key="user", rate="30/m", block=True)
+@ratelimit(key="user", rate="30/m", block=False)
 def ShowSurveyView(request, survey_id):
+    if getattr(request, 'limited', False):
+        return HttpResponseForbidden("Too many requests. Please try again in a minute.")
+
     get_object_or_404(SurveyLink, user=request.user.id, survey_id=survey_id)
 
     try:
@@ -102,9 +116,11 @@ def ShowSurveyView(request, survey_id):
   
 
 @login_required
-@ratelimit(key="user", rate="20/m", method="POST", block=True)
+@ratelimit(key="user", rate="20/m", method="POST", block=False)
 def DeleteQuestion(request, survey_id, question_id):
-    
+    if getattr(request, 'limited', False):
+        return HttpResponseForbidden("Too many requests. Please try again in a minute.")
+
     get_object_or_404(SurveyLink, user=request.user.id, survey_id=survey_id)
 
     if request.method == "POST":
@@ -127,8 +143,14 @@ def DeleteQuestion(request, survey_id, question_id):
 
         
 @login_required
-@ratelimit(key="user", rate="30/m", block=True)
+@ratelimit(key="user", rate="30/m", block=False)
 def DeleteSurvey(request, survey_id):
+    if getattr(request, 'limited', False):
+        return HttpResponseForbidden("Too many requests. Please try again in a minute.")
+
+    get_object_or_404(SurveyLink, user=request.user.id, survey_id=survey_id)
+
+
     try:
         # Delete answers and responses related to this survey
         responses = Response.objects.filter(survey=ObjectId(survey_id))
@@ -156,8 +178,12 @@ def DeleteSurvey(request, survey_id):
 
 
 @login_required
-@ratelimit(key="user", rate="30/m", block=True)
+@ratelimit(key="user", rate="30/m", block=False)
 def DownloadSurvey(request, survey_id):
+    if getattr(request, 'limited', False):
+        return HttpResponseForbidden("Too many requests. Please try again in a minute.")
+
+
     get_object_or_404(SurveyLink, user=request.user.id, survey_id=survey_id)
 
     try:
@@ -200,8 +226,11 @@ def DownloadSurvey(request, survey_id):
 
 
 @login_required
-@ratelimit(key="user", rate="30/m", block=True)
+@ratelimit(key="user", rate="30/m", block=False)
 def BuildDiagram(request, survey_id):
+    if getattr(request, 'limited', False):
+        return HttpResponseForbidden("Too many requests. Please try again in a minute.")
+
     get_object_or_404(SurveyLink, user=request.user.id, survey_id=survey_id)
 
     try:
