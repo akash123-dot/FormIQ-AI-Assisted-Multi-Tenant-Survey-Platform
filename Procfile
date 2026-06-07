@@ -1,1 +1,0 @@
-web: gunicorn --pythonpath smart_survey smart_survey.wsgi:application

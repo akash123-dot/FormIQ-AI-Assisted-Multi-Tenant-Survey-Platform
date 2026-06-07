@@ -81,38 +81,38 @@ WSGI_APPLICATION = 'smart_survey.wsgi.application'
 
 
 
-from dotenv import load_dotenv
+# from dotenv import load_dotenv
 
-load_dotenv()
+# load_dotenv()
 
 
 
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
-    }
-}
+# DATABASES = {
+#     'default': {
+#         'ENGINE': 'django.db.backends.sqlite3',
+#         'NAME': BASE_DIR / 'db.sqlite3',
+#     }
+# }
 
 # load_dotenv(BASE_DIR / ".env")
 
-# DATABASES = {
-#     "default": {
-#         "ENGINE": "django.db.backends.postgresql",
-#         "NAME": os.getenv("DB_NAME"),
-#         "USER": os.getenv("DB_USER"),
-#         "PASSWORD": os.getenv("DB_PASSWORD"),
-#         "HOST": os.getenv("DB_HOST"),
-#         "PORT": os.getenv("DB_PORT"),
-#         "CONN_MAX_AGE": 0,
-#         "OPTIONS": {
-#             "sslmode": os.getenv("DB_SSLMODE", "require"),
-#         },
-#     }
-# }
+DATABASES = {
+    "default": {
+        "ENGINE": "django.db.backends.postgresql",
+        "NAME": os.getenv("DB_NAME"),
+        "USER": os.getenv("DB_USER"),
+        "PASSWORD": os.getenv("DB_PASSWORD"),
+        "HOST": os.getenv("DB_HOST"),
+        "PORT": os.getenv("DB_PORT"),
+        "CONN_MAX_AGE": 0,
+        "OPTIONS": {
+            "sslmode": os.getenv("DB_SSLMODE", "require"),
+        },
+    }
+}
 
 
 
@@ -172,20 +172,21 @@ from mongoengine import connect
 
 
 # MONGODB_URI = os.getenv("MONGODB_URI")
+MONGODB_URI = os.environ.get("MONGO_URI", "mongodb://localhost:27017/formiq_mongo")
 
-# if MONGODB_URI:
-#     connect(host=MONGODB_URI)
-# else:
-#     raise Exception("MONGODB_URI is not set")
+if MONGODB_URI:
+    connect(host=MONGODB_URI)
+else:
+    raise Exception("MONGODB_URI is not set")
 
 
 # print("MONGODB_URI present:", bool(os.getenv("MONGODB_URI")), file=sys.stderr)
 
 
-connect(
-    db="survey_app",
-    host="mongodb://localhost:27017/survey_app",  
-)
+# connect(
+#     db="survey_app",
+#     host="mongodb://localhost:27017/survey_app",  
+# )
 
 
 
@@ -222,7 +223,7 @@ REDIS_URL = os.getenv("REDIS_URL")
 CACHES = {
     "default": {
         "BACKEND": "django_redis.cache.RedisCache",
-        "LOCATION": REDIS_URL,
+        "LOCATION": os.environ.get("REDIS_URL", "redis://127.0.0.1:6339/0"),
         "OPTIONS": {
             "CLIENT_CLASS": "django_redis.client.DefaultClient",
             "IGNORE_EXCEPTIONS": True,
@@ -243,9 +244,9 @@ RATELIMIT_USE_CACHE = "default"
 
 
 
-# GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")
+GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")
 
-GOOGLE_API_KEY = os.environ.get('GOOGLE_API_KEY')
+# GOOGLE_API_KEY = os.environ.get('GOOGLE_API_KEY')
 
 
 
@@ -258,14 +259,11 @@ MESSAGE_TAGS = {
 
 
 
-# SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 
-
-# SECURE_SSL_REDIRECT = True
-
-
-# SESSION_COOKIE_SECURE = True
-# CSRF_COOKIE_SECURE = True
+SECURE_SSL_REDIRECT = os.getenv('SECURE_SSL_REDIRECT', 'False') == 'True'
+SESSION_COOKIE_SECURE = os.getenv('SESSION_COOKIE_SECURE', 'False') == 'True'
+CSRF_COOKIE_SECURE = os.getenv('CSRF_COOKIE_SECURE', 'False') == 'True'
 
 
 

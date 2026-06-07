@@ -1,0 +1,34 @@
+# Version Control
+.git
+.gitignore
+.hg
+.svn
+
+# Local Dependencies & Caches
+
+.eslintcache
+__pycache__/
+*.pyc
+
+# Environment Files & Secrets
+.venv
+.env
+.env.*
+*.pem
+*.key
+id_rsa
+
+# IDE / System Junk
+.idea/
+.vscode/
+*.suo
+*.ntvs*
+.DS_Store
+Thumbs.db
+
+# Build Artifacts / Docs
+dist/
+build/
+out/
+README.md
+docs/
