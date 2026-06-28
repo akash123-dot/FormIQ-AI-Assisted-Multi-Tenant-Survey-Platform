@@ -9,11 +9,11 @@
 [![Redis](https://img.shields.io/badge/Redis-Rate%20Limiting-DC382D?style=flat&logo=redis)](https://redis.io/)
 [![LangGraph](https://img.shields.io/badge/LangGraph-AI%20Agent-000000?style=flat)](https://langchain-ai.github.io/langgraph/)
 [![Gemini](https://img.shields.io/badge/Gemini-Google%20AI-4285F4?style=flat&logo=google)](https://deepmind.google/technologies/gemini/)
-[![Railway](https://img.shields.io/badge/Deployed%20on-Railway-0B0D0E?style=flat)](https://railway.app/)
+[![AWS Lambda](https://img.shields.io/badge/Deployed%20on-AWS%20Lambda-FF9900?style=flat&logo=aws-lambda&logoColor=white)](https://aws.amazon.com/lambda/)
 [![Solo Build](https://img.shields.io/badge/Built%20by-Solo%20Developer-blueviolet?style=flat)]()
 
-🌐 **Live Demo:** `[link coming soon]`
-📁 **GitHub:** `[https://github.com/akash123-dot/FormIQ-AI-Assisted-Multi-Tenant-Survey-Platform/tree/main?tab=readme-ov-file]`
+🌐 **Live Demo:** `[https://rqaoxvus4tiv567hfknjq7bckq0lczjk.lambda-url.ap-south-1.on.aws/]`
+📁 **GitHub:** `[https://github.com/akash123-dot/FormIQ-AI-Assisted-Multi-Tenant-Survey-Platform/tree/lambda-branch]`
 
 ---
 
@@ -29,7 +29,7 @@ Building a survey tool sounds simple — until you think about multi-tenancy, qu
 
 **FormIQ** is a multi-tenant survey platform where each user owns their surveys in complete isolation. It has two modes for building questions: **manual** (you write them yourself) and **AI Builder** (Gemini generates them based on your survey context). Surveys are shared via a unique public link, responses are collected into MongoDB, and a dashboard shows response counts and charts per survey. Full surveys can be exported as JSON at any time.
 
-**Built solo. Deployed on Railway.**
+**Built solo. Deployed on AWS Lambda.**
 
 ---
 
@@ -212,7 +212,7 @@ The dashboard is scoped strictly per user — **no user can see another user's s
 | **Redis** | Rate limiting | Lightweight counter store; prevents API abuse without adding infrastructure complexity |
 | **LangGraph** | AI agent orchestration | ReAct loop allows the agent to reason, use tools, and self-correct — more reliable than a single prompt |
 | **Gemini (Google)** | Question generation | Strong instruction-following for structured JSON output of typed survey questions |
-| **Railway** | Deployment | Simple container-based deployment with managed PostgreSQL, MongoDB, and Redis add-ons |
+| **AWS Lambda** | Deployment | Serverless container-based deployment with automated scaling |
 
 ---
 
@@ -235,6 +235,9 @@ Generating the link at creation (rather than at publish time) means the owner al
 
 ### Why multi-tenant isolation at the query layer?
 Every dashboard query filters by the authenticated user's ID — `Survey.objects.filter(owner=request.user)`. There is no shared survey pool and no admin bypass. This means even if a survey ID is guessed or leaked, fetching it through the dashboard returns a 404 for any user who doesn't own it. The public submission link is intentionally the only unauthenticated surface, and it only allows writing responses, not reading survey ownership data.
+
+### Why choose AWS Lambda for deployment?
+The core system relies heavily on variable traffic patterns, with heavy bursts of survey creation and submissions followed by periods of idle downtime. Standard container hosts or virtual machines require maintaining and paying for 24/7 compute capacity just to handle peak traffic. AWS Lambda’s serverless architecture removes infrastructure management entirely: it scales instantly and automatically to handle thousands of concurrent survey submissions per second, then scales down to zero when idle. By shifting to a pay-per-execution model, the platform eliminates the cost of idle servers while ensuring high availability and sub-millisecond compute scaling without requiring manual intervention.
 
 ---
 
@@ -287,10 +290,22 @@ Every dashboard query filters by the authenticated user's ID — `Survey.objects
 
 ### Run
 
+
+* Make sure you have the following installed on your machine:
+* [Git](https://git-scm.com/)
+* [Docker Desktop](https://www.docker.com/products/docker-desktop/)
+
 ```bash
-git clone [repo link coming soon]
+# 1. Clone the specific AWS Lambda development branch
+git clone -b lambda-branch https://github.com/akash123-dot/FormIQ-AI-Assisted-Multi-Tenant-Survey-Platform.git
+
+# 2. Navigate into the project directory
 cd formiq
+
+# 3. Create your local environment file from the template
 cp .env.example .env   # fill in your keys
+
+# 4. Build and start the infrastructure using Docker Compose
 docker compose up --build
 ```
 
@@ -305,9 +320,16 @@ App available at `http://localhost:8000`.
 SECRET_KEY=your-django-secret-key
 DEBUG=False
 ALLOWED_HOSTS=localhost,127.0.0.1
+DJANGO_SETTINGS_MODULE=smart_survey.settings
 
 # PostgreSQL
-DATABASE_URL=postgresql://user:password@localhost:5432/formiq
+
+DB_NAME=formiq_db
+DB_USER=user
+DB_PASSWORD=password
+DB_HOST=db
+DB_PORT=5432
+DB_SSLMODE=disable
 
 # MongoDB
 MONGODB_URI=mongodb://localhost:27017/formiq
@@ -336,4 +358,4 @@ GEMINI_API_KEY=your-gemini-api-key
 
 **Akash** — Built solo end to end.
 
-GitHub: `[https://github.com/akash123-dot/FormIQ-AI-Assisted-Multi-Tenant-Survey-Platform/tree/main?tab=readme-ov-file]` · Built with Django, PostgreSQL, MongoDB, LangGraph, Gemini, Redis
+GitHub: `[https://github.com/akash123-dot/FormIQ-AI-Assisted-Multi-Tenant-Survey-Platform/tree/main?tab=readme-ov-file]` · Built with Django, PostgreSQL, MongoDB, LangGraph, Gemini, Redis, AWS Lambda
